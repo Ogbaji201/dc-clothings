@@ -1,0 +1,72 @@
+import { createServerClient } from "@supabase/ssr";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          response = NextResponse.next({
+            request,
+          });
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
+        },
+      },
+    }
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
+  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+
+  /*
+   * Protect all /admin pages except the login page.
+   */
+  if (isAdminRoute && !isLoginPage && !user) {
+    const loginUrl = request.nextUrl.clone();
+
+    loginUrl.pathname = "/admin/login";
+
+    return NextResponse.redirect(loginUrl);
+  }
+
+  /*
+   * If an authenticated user visits the login page,
+   * send them to the admin dashboard.
+   */
+  if (isLoginPage && user) {
+    const adminUrl = request.nextUrl.clone();
+
+    adminUrl.pathname = "/admin";
+
+    return NextResponse.redirect(adminUrl);
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
