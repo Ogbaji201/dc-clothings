@@ -2,17 +2,59 @@
 
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const { itemCount } = useCart();
+
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const pathname = usePathname();
 
   const logoUrl =
     "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/DCLogo.png";
 
+  /*
+   * Determines which navigation item is active.
+   *
+   * Home is only active on the homepage.
+   * Other sections remain active on their sub-pages as well.
+   */
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === path || pathname.startsWith(`${path}/`);
+  };
+
+  const navItems = [
+    {
+      label: "Home",
+      href: "/",
+    },
+    {
+      label: "Shop",
+      href: "/shop",
+    },
+    {
+      label: "Collections",
+      href: "/collections",
+    },
+    {
+      label: "About",
+      href: "/about",
+    },
+    {
+      label: "Contact",
+      href: "/contact",
+    },
+  ];
+
   return (
     <header className="site-header">
+
       <div className="header-container">
 
         {/* Logo */}
@@ -34,25 +76,17 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="desktop-nav">
 
-          <a href="/" className="nav-link active">
-            Home
-          </a>
-
-          <a href="/shop" className="nav-link">
-            Shop
-          </a>
-
-          <a href="/collections" className="nav-link">
-            Collections
-          </a>
-
-          <a href="/about" className="nav-link">
-            About
-          </a>
-
-          <a href="/contact" className="nav-link">
-            Contact
-          </a>
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className={`nav-link ${
+                isActive(item.href) ? "active" : ""
+              }`}
+            >
+              {item.label}
+            </a>
+          ))}
 
         </nav>
 
@@ -108,6 +142,7 @@ export default function Header() {
               itemCount === 1 ? "item" : "items"
             }`}
           >
+
             <svg
               width="18"
               height="18"
@@ -124,14 +159,16 @@ export default function Header() {
             <span className="cart-count">
               {itemCount}
             </span>
+
           </a>
 
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu Button */}
           <button
             className="mobile-menu-button"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Open menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
             <span></span>
             <span></span>
@@ -139,6 +176,7 @@ export default function Header() {
           </button>
 
         </div>
+
       </div>
 
 
@@ -171,40 +209,16 @@ export default function Header() {
       {menuOpen && (
         <div className="mobile-menu">
 
-          <a
-            href="/"
-            onClick={() => setMenuOpen(false)}
-          >
-            Home
-          </a>
-
-          <a
-            href="/shop"
-            onClick={() => setMenuOpen(false)}
-          >
-            Shop
-          </a>
-
-          <a
-            href="/collections"
-            onClick={() => setMenuOpen(false)}
-          >
-            Collections
-          </a>
-
-          <a
-            href="/about"
-            onClick={() => setMenuOpen(false)}
-          >
-            About
-          </a>
-
-          <a
-            href="/contact"
-            onClick={() => setMenuOpen(false)}
-          >
-            Contact
-          </a>
+          {navItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className={isActive(item.href) ? "active" : ""}
+            >
+              {item.label}
+            </a>
+          ))}
 
         </div>
       )}
