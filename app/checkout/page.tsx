@@ -27,6 +27,10 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] =
     useState("");
 
+  // --------------------------------------------------
+  // DELIVERY + TOTAL
+  // --------------------------------------------------
+
   const deliveryFee = 5000;
   const total = subtotal + deliveryFee;
 
@@ -101,30 +105,24 @@ export default function CheckoutPage() {
       }
 
       // ----------------------------------------------
-      // SUCCESS
+      // VERIFY PAYSTACK URL
       // ----------------------------------------------
 
-      console.log(
-        "Order successfully created:",
-        data
-      );
-
-      if(!data.authorizationUrl) {
+      if (
+        !data.authorizationUrl
+      ) {
         throw new Error(
           "Unable to initialize payment for your order."
         );
       }
 
+      // ----------------------------------------------
+      // REDIRECT TO PAYSTACK
+      // ----------------------------------------------
+
       window.location.href =
         data.authorizationUrl;
-      
-      return
 
-      alert(
-        `Order created successfully!\n\nOrder Number: ${data.orderNumber}\n\nTotal: ₦${Number(
-          data.totalAmount
-        ).toLocaleString()}`
-      );
     } catch (error) {
       console.error(
         "Checkout error:",
@@ -558,7 +556,9 @@ export default function CheckoutPage() {
 
                   <strong>
                     ₦
-                    {subtotal.toLocaleString()}
+                    {subtotal.toLocaleString(
+                      "en-NG"
+                    )}
                   </strong>
                 </div>
 
@@ -568,9 +568,10 @@ export default function CheckoutPage() {
                   </span>
 
                   <strong>
-                    {deliveryFee === 0
-                      ? "Calculated later"
-                      : `₦${Number(deliveryFee).toLocaleString("en-NG")}`}
+                    ₦
+                    {deliveryFee.toLocaleString(
+                      "en-NG"
+                    )}
                   </strong>
                 </div>
 
@@ -584,7 +585,9 @@ export default function CheckoutPage() {
 
                 <strong>
                   ₦
-                  {total.toLocaleString()}
+                  {total.toLocaleString(
+                    "en-NG"
+                  )}
                 </strong>
 
               </div>

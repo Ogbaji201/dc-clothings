@@ -34,6 +34,7 @@ export default async function AdminProductDetailsPage({
         description,
         base_price,
         stock_quantity,
+        inventory_mode,
         is_active,
         is_featured
       `)
