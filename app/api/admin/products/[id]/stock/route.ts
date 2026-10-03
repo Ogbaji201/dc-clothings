@@ -57,10 +57,13 @@ export async function PATCH(
 
     const adminSupabase = createAdminClient();
 
+    // Get the product and its inventory mode.
     const { data: product, error: productError } =
       await adminSupabase
         .from("products")
-        .select("id, name, stock_quantity")
+        .select(
+          "id, name, stock_quantity, inventory_mode"
+        )
         .eq("id", id)
         .single();
 
@@ -75,15 +78,31 @@ export async function PATCH(
       );
     }
 
+    // Variant-managed products must have their stock
+    // controlled through product variants.
+    if (product.inventory_mode === "variant") {
+      return NextResponse.json(
+        {
+          error:
+            "This product uses Variant Stock. Update stock through the product variants instead.",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    // Product-managed stock can be updated directly.
     const { data: updatedProduct, error: updateError } =
       await adminSupabase
         .from("products")
         .update({
           stock_quantity: stockQuantity,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", id)
         .select(
-          "id, name, stock_quantity"
+          "id, name, stock_quantity, inventory_mode"
         )
         .single();
 

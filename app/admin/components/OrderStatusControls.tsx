@@ -53,8 +53,8 @@ export default function OrderStatusControls({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            orderStatus,
-            paymentStatus,
+           order_status: orderStatus,
+           payment_status: paymentStatus,
           }),
         }
       );

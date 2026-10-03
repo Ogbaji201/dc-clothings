@@ -27,7 +27,7 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] =
     useState("");
 
-  const deliveryFee = 0;
+  const deliveryFee = 5000;
   const total = subtotal + deliveryFee;
 
   // --------------------------------------------------
@@ -108,6 +108,17 @@ export default function CheckoutPage() {
         "Order successfully created:",
         data
       );
+
+      if(!data.authorizationUrl) {
+        throw new Error(
+          "Unable to initialize payment for your order."
+        );
+      }
+
+      window.location.href =
+        data.authorizationUrl;
+      
+      return
 
       alert(
         `Order created successfully!\n\nOrder Number: ${data.orderNumber}\n\nTotal: ₦${Number(

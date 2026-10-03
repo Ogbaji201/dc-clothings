@@ -166,7 +166,7 @@ export default function AdminLayout({
         <div className="admin-sidebar-bottom">
 
           <Link
-            href="/"
+            href="https://dc-clothings.vercel.app"
             className="admin-sidebar-secondary-link"
           >
             ← View Website

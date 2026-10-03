@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-// import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type CartItem = {
   productId: string;
+  variantId: string;
   name: string;
   slug: string;
   price: number;
@@ -29,16 +29,21 @@ export async function POST(request: Request) {
     const cartItems: CartItem[] = body.cartItems;
     const customer: CustomerDetails = body.customer;
 
-    // --------------------------------------------------
+    // ==================================================
     // 1. BASIC VALIDATION
-    // --------------------------------------------------
+    // ==================================================
 
-    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+    if (
+      !Array.isArray(cartItems) ||
+      cartItems.length === 0
+    ) {
       return NextResponse.json(
         {
           error: "Your cart is empty.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
@@ -54,27 +59,32 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         {
-          error: "Please provide all required customer details.",
+          error:
+            "Please provide all required customer details.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    const supabase = await createAdminClient();
+    const supabase = createAdminClient();
 
-    // --------------------------------------------------
-    // 2. GET PRODUCT IDS
-    // --------------------------------------------------
+    // ==================================================
+    // 2. GET UNIQUE PRODUCT IDS
+    // ==================================================
 
     const productIds = [
       ...new Set(
-        cartItems.map((item) => item.productId)
+        cartItems.map(
+          (item) => item.productId
+        )
       ),
     ];
 
-    // --------------------------------------------------
+    // ==================================================
     // 3. GET PRODUCTS FROM DATABASE
-    // --------------------------------------------------
+    // ==================================================
 
     const {
       data: products,
@@ -87,12 +97,14 @@ export async function POST(request: Request) {
         slug,
         base_price,
         stock_quantity,
+        inventory_mode,
         is_active,
         product_variants (
           id,
           size,
           color,
           price,
+          stock_quantity,
           is_active
         )
       `)
@@ -106,9 +118,12 @@ export async function POST(request: Request) {
 
       return NextResponse.json(
         {
-          error: "Unable to verify your products.",
+          error:
+            "Unable to verify your products.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
@@ -121,19 +136,25 @@ export async function POST(request: Request) {
           error:
             "One or more products in your cart could not be found.",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // 4. VERIFY CART ITEMS
-    // --------------------------------------------------
+    // ==================================================
 
     let subtotal = 0;
 
     const verifiedItems = [];
 
     for (const item of cartItems) {
+      // -----------------------------------------------
+      // Find product
+      // -----------------------------------------------
+
       const product = products.find(
         (product) =>
           product.id === item.productId
@@ -145,22 +166,32 @@ export async function POST(request: Request) {
             error:
               `Product ${item.name} could not be found.`,
           },
-          { status: 400 }
+          {
+            status: 400,
+          }
         );
       }
 
+      // -----------------------------------------------
       // Product must still be active
+      // -----------------------------------------------
+
       if (!product.is_active) {
         return NextResponse.json(
           {
             error:
               `${product.name} is no longer available.`,
           },
-          { status: 400 }
+          {
+            status: 400,
+          }
         );
       }
 
+      // -----------------------------------------------
       // Validate quantity
+      // -----------------------------------------------
+
       if (
         !Number.isInteger(item.quantity) ||
         item.quantity < 1
@@ -170,30 +201,22 @@ export async function POST(request: Request) {
             error:
               `Invalid quantity for ${product.name}.`,
           },
-          { status: 400 }
-        );
-      }
-
-      // Check total product stock
-      if (
-        Number(product.stock_quantity) <
-        item.quantity
-      ) {
-        return NextResponse.json(
           {
-            error:
-              `Sorry, ${product.name} does not have enough stock.`,
-          },
-          { status: 400 }
+            status: 400,
+          }
         );
       }
 
-      // Find selected size + colour
+      // -----------------------------------------------
+      // Find selected variant
+      // -----------------------------------------------
+
       const variants =
-        product.product_variants || [];
+        product.product_variants ?? [];
 
       const variant = variants.find(
         (variant) =>
+          variant.id === item.variantId &&
           variant.size === item.size &&
           variant.color === item.color &&
           variant.is_active
@@ -203,13 +226,79 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             error:
-              `The selected size or colour for ${product.name} is not available.`,
+              `The selected size or colour for ${product.name} is no longer available.`,
           },
-          { status: 400 }
+          {
+            status: 400,
+          }
         );
       }
 
-      // Use the DATABASE price
+      // ==================================================
+      // STOCK VALIDATION
+      // ==================================================
+
+      if (
+        product.inventory_mode ===
+        "variant"
+      ) {
+        // -----------------------------------------------
+        // Variant-managed stock
+        // -----------------------------------------------
+
+        const variantStock = Number(
+          variant.stock_quantity ?? 0
+        );
+
+        if (
+          variantStock < item.quantity
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                `Sorry, ${product.name} (${item.color} / ${item.size}) does not have enough stock. Only ${variantStock} ${
+                  variantStock === 1
+                    ? "unit"
+                    : "units"
+                } available.`,
+            },
+            {
+              status: 400,
+            }
+          );
+        }
+      } else {
+        // -----------------------------------------------
+        // Product-managed stock
+        // -----------------------------------------------
+
+        const productStock = Number(
+          product.stock_quantity ?? 0
+        );
+
+        if (
+          productStock < item.quantity
+        ) {
+          return NextResponse.json(
+            {
+              error:
+                `Sorry, ${product.name} does not have enough stock. Only ${productStock} ${
+                  productStock === 1
+                    ? "unit"
+                    : "units"
+                } available.`,
+            },
+            {
+              status: 400,
+            }
+          );
+        }
+      }
+
+      // ==================================================
+      // USE DATABASE PRICE
+      // ==================================================
+
       const actualPrice = Number(
         variant.price ??
           product.base_price
@@ -232,21 +321,22 @@ export async function POST(request: Request) {
       });
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // 5. DELIVERY FEE
-    // --------------------------------------------------
+    // ==================================================
 
-    // Temporary delivery fee.
-    // We will build the actual delivery calculation later.
+    // Temporary static delivery fee.
+    // This will be replaced with location-based
+    // delivery calculation later.
 
-    const deliveryFee = 0;
+    const deliveryFee = 5000;
 
     const totalAmount =
       subtotal + deliveryFee;
 
-    // --------------------------------------------------
+    // ==================================================
     // 6. FIND EXISTING CUSTOMER
-    // --------------------------------------------------
+    // ==================================================
 
     const {
       data: existingCustomer,
@@ -268,16 +358,18 @@ export async function POST(request: Request) {
           error:
             "Unable to verify customer information.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
     let customerId =
       existingCustomer?.id ?? null;
 
-    // --------------------------------------------------
+    // ==================================================
     // 7. CREATE CUSTOMER IF NEW
-    // --------------------------------------------------
+    // ==================================================
 
     if (!customerId) {
       const {
@@ -288,13 +380,10 @@ export async function POST(request: Request) {
         .insert({
           full_name:
             customer.fullName,
-
           email:
             customer.email,
-
           phone:
             customer.phone,
-
           address:
             customer.address,
         })
@@ -312,7 +401,9 @@ export async function POST(request: Request) {
             error:
               "Unable to create customer record.",
           },
-          { status: 500 }
+          {
+            status: 500,
+          }
         );
       }
 
@@ -320,16 +411,16 @@ export async function POST(request: Request) {
         newCustomer.id;
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // 8. GENERATE ORDER NUMBER
-    // --------------------------------------------------
+    // ==================================================
 
     const orderNumber =
       `DCC-${Date.now()}`;
 
-    // --------------------------------------------------
+    // ==================================================
     // 9. CREATE ORDER
-    // --------------------------------------------------
+    // ==================================================
 
     const {
       data: order,
@@ -392,13 +483,15 @@ export async function POST(request: Request) {
           error:
             "Unable to create your order.",
         },
-        { status: 500 }
+        {
+          status: 500,
+        }
       );
     }
 
-    // --------------------------------------------------
+    // ==================================================
     // 10. CREATE ORDER ITEMS
-    // --------------------------------------------------
+    // ==================================================
 
     const orderItems =
       verifiedItems.map(
@@ -448,19 +541,143 @@ export async function POST(request: Request) {
       await supabase
         .from("orders")
         .delete()
-        .eq("id", order.id);
+        .eq(
+          "id",
+          order.id
+        );
 
       return NextResponse.json(
         {
           error:
             "Unable to create your order items.",
         },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    // --------------------------------------------------
+    // 11. INITIALIZE PAYSTACK PAYMENT
+    // --------------------------------------------------
+
+    const paymentReference =
+      `${order.order_number}-PAY`;
+
+    const callbackUrl =
+      new URL(
+        "/payment/callback",
+        request.url
+      ).toString();
+
+    const paystackResponse =
+      await fetch(
+        "https://api.paystack.co/transaction/initialize",
+        {
+          method: "POST",
+
+          headers: {
+            Authorization:
+              `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            email:
+              customer.email,
+
+            // Paystack expects NGN in kobo
+            amount:
+              String(
+                Math.round(
+                  Number(totalAmount) * 100
+                )
+              ),
+
+            currency:
+              "NGN",
+
+            reference:
+              paymentReference,
+
+            callback_url:
+              callbackUrl,
+
+            metadata: {
+              order_id:
+                order.id,
+
+              order_number:
+                order.order_number,
+            },
+          }),
+        }
+      );
+
+    const paystackData =
+      await paystackResponse.json();
+
+    if (
+      !paystackResponse.ok ||
+      !paystackData.status ||
+      !paystackData.data?.authorization_url
+    ) {
+      console.error(
+        "Paystack initialization error:",
+        paystackData
+      );
+
+      // Remove incomplete order
+      await supabase
+        .from("orders")
+        .delete()
+        .eq("id", order.id);
+
+      return NextResponse.json(
+        {
+          error:
+            "Unable to initialize payment. Please try again.",
+        },
         { status: 500 }
       );
     }
 
     // --------------------------------------------------
-    // 11. RETURN SUCCESS
+    // 12. SAVE PAYMENT REFERENCE
+    // --------------------------------------------------
+
+    const {
+      error: paymentReferenceError,
+    } = await supabase
+      .from("orders")
+      .update({
+        payment_reference:
+          paystackData.data.reference,
+
+        updated_at:
+          new Date().toISOString(),
+      })
+      .eq("id", order.id);
+
+    if (paymentReferenceError) {
+      console.error(
+        "Payment reference update error:",
+        paymentReferenceError
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Unable to save payment information.",
+        },
+        { status: 500 }
+      );
+    }
+
+    // --------------------------------------------------
+    // 13. RETURN PAYSTACK CHECKOUT URL
     // --------------------------------------------------
 
     return NextResponse.json({
@@ -480,7 +697,15 @@ export async function POST(request: Request) {
 
       totalAmount:
         totalAmount,
+
+      paymentReference:
+        paystackData.data.reference,
+
+      authorizationUrl:
+        paystackData.data.authorization_url,
     });
+
+
 
   } catch (error) {
     console.error(
@@ -493,7 +718,9 @@ export async function POST(request: Request) {
         error:
           "Something went wrong while creating your order.",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

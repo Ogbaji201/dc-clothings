@@ -5,6 +5,7 @@ import { useState } from "react";
 type InventoryStockEditorProps = {
   productId: string;
   initialStock: number;
+  inventoryMode: "product" | "variant";
   onStockUpdated: (
     productId: string,
     newStock: number
@@ -14,6 +15,7 @@ type InventoryStockEditorProps = {
 export default function InventoryStockEditor({
   productId,
   initialStock,
+  inventoryMode,
   onStockUpdated,
 }: InventoryStockEditorProps) {
   const [stock, setStock] = useState(
@@ -70,7 +72,6 @@ export default function InventoryStockEditor({
 
       setStock(String(updatedStock));
 
-      // Tell the parent component about the new stock.
       onStockUpdated(
         productId,
         updatedStock
@@ -95,37 +96,45 @@ export default function InventoryStockEditor({
 
   return (
     <div className="admin-stock-editor">
-      <input
-        type="number"
-        min="0"
-        step="1"
-        value={stock}
-        onChange={(event) => {
-          setStock(event.target.value);
-          setMessage("");
-          setError("");
-        }}
-        aria-label="Stock quantity"
-      />
-
-      <button
-        type="button"
-        onClick={saveStock}
-        disabled={isSaving}
-      >
-        {isSaving ? "Saving..." : "Save"}
-      </button>
-
-      {message && (
-        <span className="admin-stock-save-message">
-          {message}
+      {inventoryMode === "variant" ? (
+        <span className="admin-stock-managed">
+          Variant Managed
         </span>
-      )}
+      ) : (
+        <>
+          <input
+            type="number"
+            min="0"
+            step="1"
+            value={stock}
+            onChange={(event) => {
+              setStock(event.target.value);
+              setMessage("");
+              setError("");
+            }}
+            aria-label="Stock quantity"
+          />
 
-      {error && (
-        <span className="admin-stock-error-message">
-          {error}
-        </span>
+          <button
+            type="button"
+            onClick={saveStock}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : "Save"}
+          </button>
+
+          {message && (
+            <span className="admin-stock-save-message">
+              {message}
+            </span>
+          )}
+
+          {error && (
+            <span className="admin-stock-error-message">
+              {error}
+            </span>
+          )}
+        </>
       )}
     </div>
   );

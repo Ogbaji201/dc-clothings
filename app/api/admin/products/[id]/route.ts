@@ -9,6 +9,7 @@ const allowedFields = [
   "category_id",
   "base_price",
   "stock_quantity",
+  "inventory_mode",
   "is_active",
   "is_featured",
 ];
@@ -121,6 +122,17 @@ export async function PATCH(
     ) {
       return NextResponse.json(
         { error: "Invalid category." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      "inventory_mode" in updateData &&
+      updateData.inventory_mode !== "product" &&
+      updateData.inventory_mode !== "variant" 
+    ) {
+      return NextResponse.json(
+        { error: "Invalid inventory mode." },
         { status: 400 }
       );
     }

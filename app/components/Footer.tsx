@@ -269,7 +269,9 @@ export default function Footer() {
         </div>
 
         <p className="footer-motto">
-          Style Today. A Brighter Tomorrow.
+          Style Today. A Brighter Tomorrow. 
+          <br/>
+          DCclothings is a sub brand of Dammyscreation Global Limited
         </p>
 
       </div>

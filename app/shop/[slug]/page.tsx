@@ -29,6 +29,7 @@ export default async function ProductPage({
       description,
       base_price,
       stock_quantity,
+      inventory_mode,
       product_images (
         id,
         image_url,
@@ -41,6 +42,7 @@ export default async function ProductPage({
         size,
         color,
         price,
+        stock_quantity,
         is_active
       )
     `)

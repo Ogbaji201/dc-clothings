@@ -9,6 +9,7 @@ type InventoryProduct = {
   slug: string;
   base_price: number;
   stock_quantity: number;
+  inventory_mode: "product" | "variant";
   is_active: boolean;
   is_featured: boolean;
   category_id: string | null;
@@ -361,6 +362,9 @@ export default function InventoryFilters({
                       <InventoryStockEditor
                         productId={product.id}
                         initialStock={stock}
+                        inventoryMode={
+                          product.inventory_mode
+                        }
                         onStockUpdated={
                           handleStockUpdated
                         }

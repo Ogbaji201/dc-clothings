@@ -18,13 +18,38 @@ type ProductVariantsProps = {
   variants: Variant[];
 };
 
+const AVAILABLE_COLOURS = [
+  "Black",
+  "White",
+  "Brown",
+  "Yellow",
+  "Blue",
+];
+
+const AVAILABLE_SIZES = [
+  "M",
+  "L",
+  "XL",
+  "XXL",
+];
+
+type VariantCombination = {
+  color: string;
+  size: string;
+};
+
 export default function ProductVariants({
   productId,
   variants,
 }: ProductVariantsProps) {
   const router = useRouter();
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // --------------------------------------------------
+  // Existing variant editing
+  // --------------------------------------------------
+
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
 
   const [editSize, setEditSize] = useState("");
   const [editColor, setEditColor] = useState("");
@@ -35,6 +60,156 @@ export default function ProductVariants({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // --------------------------------------------------
+  // Variant generator
+  // --------------------------------------------------
+
+  const [selectedColours, setSelectedColours] =
+    useState<string[]>([]);
+
+  const [selectedSizes, setSelectedSizes] =
+    useState<string[]>([]);
+
+  const [generatedCombinations, setGeneratedCombinations] =
+    useState<VariantCombination[]>([]);
+
+  function toggleColour(colour: string) {
+    setSelectedColours((current) =>
+      current.includes(colour)
+        ? current.filter((item) => item !== colour)
+        : [...current, colour]
+    );
+
+    setGeneratedCombinations([]);
+  }
+
+  function toggleSize(size: string) {
+    setSelectedSizes((current) =>
+      current.includes(size)
+        ? current.filter((item) => item !== size)
+        : [...current, size]
+    );
+
+    setGeneratedCombinations([]);
+  }
+
+  function generateCombinations() {
+    setError("");
+    setSuccess("");
+
+    if (selectedColours.length === 0) {
+      setError("Please select at least one colour.");
+      return;
+    }
+
+    if (selectedSizes.length === 0) {
+      setError("Please select at least one size.");
+      return;
+    }
+
+    const existingCombinations = new Set(
+      variants.map(
+        (variant) =>
+          `${variant.color.toLowerCase()}::${variant.size.toLowerCase()}`
+      )
+    );
+
+    const combinations: VariantCombination[] = [];
+
+    for (const colour of selectedColours) {
+      for (const size of selectedSizes) {
+        const key = `${colour.toLowerCase()}::${size.toLowerCase()}`;
+
+        if (!existingCombinations.has(key)) {
+          combinations.push({
+            color: colour,
+            size,
+          });
+        }
+      }
+    }
+
+    if (combinations.length === 0) {
+      setError(
+        "All of the selected colour and size combinations already exist."
+      );
+      setGeneratedCombinations([]);
+      return;
+    }
+
+    setGeneratedCombinations(combinations);
+  }
+
+  async function createVariants() {
+    if (generatedCombinations.length === 0) {
+      setError("Please preview the variants first.");
+      return;
+    }
+
+    setError("");
+    setSuccess("");
+    setSaving(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products/${productId}/variants`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            variants: generatedCombinations,
+          }),
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(
+          result.error ||
+            "Unable to create the variants."
+        );
+        return;
+      }
+
+      setSuccess(
+        result.message ||
+          "Variants created successfully."
+      );
+
+      setGeneratedCombinations([]);
+      setSelectedColours([]);
+      setSelectedSizes([]);
+
+      router.refresh();
+    } catch (error) {
+      console.error(
+        "Create variants error:",
+        error
+      );
+
+      setError(
+        "Something went wrong while creating the variants."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function clearGenerator() {
+    setSelectedColours([]);
+    setSelectedSizes([]);
+    setGeneratedCombinations([]);
+    setError("");
+    setSuccess("");
+  }
+
+  // --------------------------------------------------
+  // Existing variant editing functions
+  // --------------------------------------------------
 
   function startEditing(variant: Variant) {
     setEditingId(variant.id);
@@ -63,6 +238,7 @@ export default function ProductVariants({
     setSuccess("");
 
     const price = Number(editPrice);
+
     const stock =
       editStock.trim() === ""
         ? null
@@ -117,18 +293,28 @@ export default function ProductVariants({
 
       if (!response.ok) {
         setError(
-          result.error || "Unable to update the variant."
+          result.error ||
+            "Unable to update the variant."
         );
         return;
       }
 
-      setSuccess("Variant updated successfully.");
+      setSuccess(
+        "Variant updated successfully."
+      );
+
       setEditingId(null);
 
       router.refresh();
     } catch (error) {
-      console.error("Variant update error:", error);
-      setError("Something went wrong while updating the variant.");
+      console.error(
+        "Variant update error:",
+        error
+      );
+
+      setError(
+        "Something went wrong while updating the variant."
+      );
     } finally {
       setSaving(false);
     }
@@ -136,13 +322,18 @@ export default function ProductVariants({
 
   return (
     <section className="admin-section">
+
+      {/* =========================================
+          SECTION HEADER
+          ========================================= */}
+
       <div className="admin-section-header">
         <div>
           <h2>Product Variants</h2>
 
           <p className="admin-page-introduction">
-            Manage the available colour, size, price and stock
-            combinations for this product.
+            Manage the available colour, size, price
+            and stock combinations for this product.
           </p>
         </div>
 
@@ -150,6 +341,10 @@ export default function ProductVariants({
           {variants.length} variants
         </p>
       </div>
+
+      {/* =========================================
+          MESSAGES
+          ========================================= */}
 
       {error && (
         <div className="admin-error-message">
@@ -163,17 +358,216 @@ export default function ProductVariants({
         </div>
       )}
 
+      {/* =========================================
+          VARIANT GENERATOR
+          ========================================= */}
+
+      <div className="admin-variant-generator">
+
+        <div className="admin-variant-generator-header">
+          <div>
+            <h3>Generate Variants</h3>
+
+            <p>
+              Select the colours and sizes available
+              for this product.
+            </p>
+          </div>
+        </div>
+
+        {/* Colours */}
+
+        <div className="admin-variant-generator-group">
+
+          <label className="admin-variant-generator-label">
+            Colours
+          </label>
+
+          <div className="admin-variant-choice-grid">
+
+            {AVAILABLE_COLOURS.map((colour) => {
+              const selected =
+                selectedColours.includes(colour);
+
+              return (
+                <label
+                  key={colour}
+                  className={`admin-variant-choice ${
+                    selected
+                      ? "admin-variant-choice-selected"
+                      : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() =>
+                      toggleColour(colour)
+                    }
+                  />
+
+                  <span>{colour}</span>
+                </label>
+              );
+            })}
+
+          </div>
+        </div>
+
+        {/* Sizes */}
+
+        <div className="admin-variant-generator-group">
+
+          <label className="admin-variant-generator-label">
+            Sizes
+          </label>
+
+          <div className="admin-variant-choice-grid">
+
+            {AVAILABLE_SIZES.map((size) => {
+              const selected =
+                selectedSizes.includes(size);
+
+              return (
+                <label
+                  key={size}
+                  className={`admin-variant-choice ${
+                    selected
+                      ? "admin-variant-choice-selected"
+                      : ""
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() =>
+                      toggleSize(size)
+                    }
+                  />
+
+                  <span>{size}</span>
+                </label>
+              );
+            })}
+
+          </div>
+        </div>
+
+        {/* Generator Actions */}
+
+      <div className="admin-variant-generator-actions">
+
+        <button
+          type="button"
+          className="admin-primary-button"
+          onClick={generateCombinations}
+          disabled={saving}
+        >
+          Preview Variants
+        </button>
+
+        {generatedCombinations.length > 0 && (
+          <button
+            type="button"
+            className="admin-primary-button"
+            onClick={createVariants}
+            disabled={saving}
+          >
+            {saving
+              ? "Creating Variants..."
+              : `Create ${generatedCombinations.length} Variants`}
+          </button>
+        )}
+
+        {(selectedColours.length > 0 ||
+          selectedSizes.length > 0 ||
+          generatedCombinations.length > 0) && (
+          <button
+            type="button"
+            className="admin-table-cancel-button"
+            onClick={clearGenerator}
+            disabled={saving}
+          >
+            Clear
+          </button>
+        )}
+
+      </div>
+
+        {/* Preview */}
+
+        {generatedCombinations.length > 0 && (
+          <div className="admin-variant-preview">
+
+            <div className="admin-variant-preview-header">
+
+              <div>
+                <h4>
+                  Variants to be created
+                </h4>
+
+                <p>
+                  {generatedCombinations.length} new
+                  combinations
+                </p>
+              </div>
+
+            </div>
+
+            <div className="admin-variant-preview-grid">
+
+              {generatedCombinations.map(
+                (combination, index) => (
+                  <div
+                    key={`${combination.color}-${combination.size}-${index}`}
+                    className="admin-variant-preview-item"
+                  >
+                    <span>
+                      {combination.color}
+                    </span>
+
+                    <strong>
+                      {combination.size}
+                    </strong>
+                  </div>
+                )
+              )}
+
+            </div>
+
+            <div className="admin-variant-preview-note">
+              <strong>Next step:</strong>{" "}
+              These variants will be created using the
+              product's current base price. Initial variant
+              stock will be set to 0 and can be updated after
+              creation.
+            </div>
+
+          </div>
+        )}
+
+      </div>
+
+      {/* =========================================
+          EXISTING VARIANTS
+          ========================================= */}
+
       {variants.length === 0 ? (
         <div className="admin-empty-state">
+
           <h3>No variants found</h3>
 
           <p>
-            This product currently has no colour or size variants.
+            This product currently has no colour or
+            size variants.
           </p>
+
         </div>
       ) : (
         <div className="admin-table-wrapper">
+
           <table className="admin-table admin-variants-table">
+
             <thead>
               <tr>
                 <th>Colour</th>
@@ -186,20 +580,25 @@ export default function ProductVariants({
             </thead>
 
             <tbody>
+
               {variants.map((variant) => {
+
                 const isEditing =
                   editingId === variant.id;
 
                 if (isEditing) {
                   return (
                     <tr key={variant.id}>
+
                       <td>
                         <input
                           className="admin-inline-input"
                           type="text"
                           value={editColor}
                           onChange={(event) =>
-                            setEditColor(event.target.value)
+                            setEditColor(
+                              event.target.value
+                            )
                           }
                         />
                       </td>
@@ -210,7 +609,9 @@ export default function ProductVariants({
                           type="text"
                           value={editSize}
                           onChange={(event) =>
-                            setEditSize(event.target.value)
+                            setEditSize(
+                              event.target.value
+                            )
                           }
                         />
                       </td>
@@ -223,7 +624,9 @@ export default function ProductVariants({
                           step="0.01"
                           value={editPrice}
                           onChange={(event) =>
-                            setEditPrice(event.target.value)
+                            setEditPrice(
+                              event.target.value
+                            )
                           }
                         />
                       </td>
@@ -236,7 +639,9 @@ export default function ProductVariants({
                           step="1"
                           value={editStock}
                           onChange={(event) =>
-                            setEditStock(event.target.value)
+                            setEditStock(
+                              event.target.value
+                            )
                           }
                           placeholder="—"
                         />
@@ -244,6 +649,7 @@ export default function ProductVariants({
 
                       <td>
                         <label className="admin-inline-checkbox">
+
                           <input
                             type="checkbox"
                             checked={editActive}
@@ -255,38 +661,51 @@ export default function ProductVariants({
                           />
 
                           Active
+
                         </label>
                       </td>
 
                       <td>
+
                         <div className="admin-variant-actions">
+
                           <button
                             type="button"
                             className="admin-table-action-button"
                             onClick={() =>
-                              saveVariant(variant.id)
+                              saveVariant(
+                                variant.id
+                              )
                             }
                             disabled={saving}
                           >
-                            {saving ? "Saving..." : "Save"}
+                            {saving
+                              ? "Saving..."
+                              : "Save"}
                           </button>
 
                           <button
                             type="button"
                             className="admin-table-cancel-button"
-                            onClick={cancelEditing}
+                            onClick={
+                              cancelEditing
+                            }
                             disabled={saving}
                           >
                             Cancel
                           </button>
+
                         </div>
+
                       </td>
+
                     </tr>
                   );
                 }
 
                 return (
                   <tr key={variant.id}>
+
                     <td>
                       <div className="admin-table-primary">
                         {variant.color}
@@ -301,14 +720,18 @@ export default function ProductVariants({
                       ₦
                       {Number(
                         variant.price
-                      ).toLocaleString("en-NG")}
+                      ).toLocaleString(
+                        "en-NG"
+                      )}
                     </td>
 
                     <td>
-                      {variant.stock_quantity ?? "—"}
+                      {variant.stock_quantity ??
+                        "—"}
                     </td>
 
                     <td>
+
                       {variant.is_active ? (
                         <span className="admin-status admin-status-confirmed">
                           Active
@@ -318,26 +741,37 @@ export default function ProductVariants({
                           Inactive
                         </span>
                       )}
+
                     </td>
 
                     <td>
+
                       <button
                         type="button"
                         className="admin-table-action-button"
                         onClick={() =>
-                          startEditing(variant)
+                          startEditing(
+                            variant
+                          )
                         }
                       >
                         Edit
                       </button>
+
                     </td>
+
                   </tr>
                 );
+
               })}
+
             </tbody>
+
           </table>
+
         </div>
       )}
+
     </section>
   );
 }

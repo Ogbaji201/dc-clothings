@@ -39,6 +39,10 @@ export async function PATCH(
       is_active,
     } = body;
 
+    // ---------------------------------------------
+    // Validate input
+    // ---------------------------------------------
+
     if (
       typeof size !== "string" ||
       !size.trim()
@@ -90,17 +94,37 @@ export async function PATCH(
 
     const admin = createAdminClient();
 
-    /*
-     * Make sure the variant actually belongs
-     * to the product being edited.
-     */
-    const { data: existingVariant, error: lookupError } =
+    // ---------------------------------------------
+    // Get the product inventory mode
+    // ---------------------------------------------
+
+    const { data: product, error: productError } =
       await admin
-        .from("product_variants")
-        .select("id")
-        .eq("id", variantId)
-        .eq("product_id", id)
+        .from("products")
+        .select("id, inventory_mode")
+        .eq("id", id)
         .single();
+
+    if (productError || !product) {
+      return NextResponse.json(
+        { error: "Product not found." },
+        { status: 404 }
+      );
+    }
+
+    // ---------------------------------------------
+    // Make sure the variant belongs to this product
+    // ---------------------------------------------
+
+    const {
+      data: existingVariant,
+      error: lookupError,
+    } = await admin
+      .from("product_variants")
+      .select("id")
+      .eq("id", variantId)
+      .eq("product_id", id)
+      .single();
 
     if (lookupError || !existingVariant) {
       return NextResponse.json(
@@ -109,31 +133,37 @@ export async function PATCH(
       );
     }
 
-    const { data: updatedVariant, error } =
-      await admin
-        .from("product_variants")
-        .update({
-          size: size.trim(),
-          color: color.trim(),
-          price,
-          stock_quantity,
-          is_active,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", variantId)
-        .eq("product_id", id)
-        .select(`
-          id,
-          product_id,
-          size,
-          color,
-          price,
-          stock_quantity,
-          is_active,
-          created_at,
-          updated_at
-        `)
-        .single();
+    // ---------------------------------------------
+    // Update the variant
+    // ---------------------------------------------
+
+    const {
+      data: updatedVariant,
+      error,
+    } = await admin
+      .from("product_variants")
+      .update({
+        size: size.trim(),
+        color: color.trim(),
+        price,
+        stock_quantity,
+        is_active,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", variantId)
+      .eq("product_id", id)
+      .select(`
+        id,
+        product_id,
+        size,
+        color,
+        price,
+        stock_quantity,
+        is_active,
+        created_at,
+        updated_at
+      `)
+      .single();
 
     if (error) {
       console.error(
@@ -146,6 +176,80 @@ export async function PATCH(
         { status: 500 }
       );
     }
+
+    // ---------------------------------------------
+    // Recalculate product stock when using
+    // Variant Stock mode
+    // ---------------------------------------------
+
+    if (product.inventory_mode === "variant") {
+      const {
+        data: activeVariants,
+        error: stockLookupError,
+      } = await admin
+        .from("product_variants")
+        .select("stock_quantity")
+        .eq("product_id", id)
+        .eq("is_active", true);
+
+      if (stockLookupError) {
+        console.error(
+          "Error calculating variant stock:",
+          stockLookupError
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Variant updated, but product stock could not be recalculated.",
+          },
+          { status: 500 }
+        );
+      }
+
+      const totalStock = (activeVariants ?? []).reduce(
+        (total, variant) =>
+          total + (variant.stock_quantity ?? 0),
+        0
+      );
+
+      const { error: productStockError } =
+        await admin
+          .from("products")
+          .update({
+            stock_quantity: totalStock,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id);
+
+      if (productStockError) {
+        console.error(
+          "Error updating product stock:",
+          productStockError
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Variant updated, but product stock could not be updated.",
+          },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        variant: updatedVariant,
+        product_stock: totalStock,
+      });
+    }
+
+    // ---------------------------------------------
+    // Product Stock mode
+    // ---------------------------------------------
+    // Do not touch products.stock_quantity.
+    // It remains controlled directly from the
+    // Product Stock field.
 
     return NextResponse.json({
       success: true,

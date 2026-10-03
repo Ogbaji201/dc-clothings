@@ -91,7 +91,7 @@ export default async function AdminProductDetailsPage({
   if (variantsError) {
     console.error(
       "Error loading variants:",
-      variantsError
+      JSON.stringify(variantsError, null, 2)
     );
   }
 

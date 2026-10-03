@@ -83,7 +83,7 @@ export default function AboutPage() {
               using locally sourced fabrics and
               thoughtful tailoring. Every piece is
               carefully drafted and well tailored
-              with comfort and individuality in mind.
+              with comfort, varieties and affordability in mind.
             </p>
 
             <p>

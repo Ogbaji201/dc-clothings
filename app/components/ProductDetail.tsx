@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext";
-
 
 type ProductImage = {
   id: string;
@@ -16,6 +15,7 @@ type ProductVariant = {
   size?: string | null;
   color?: string | null;
   price?: number | null;
+  stock_quantity?: number | null;
   is_active: boolean;
 };
 
@@ -26,6 +26,7 @@ type Product = {
   description?: string | null;
   base_price: number;
   stock_quantity?: number | null;
+  inventory_mode: "product" | "variant";
   product_images?: ProductImage[];
   product_variants?: ProductVariant[];
 };
@@ -36,6 +37,7 @@ export default function ProductDetail({
   product: Product;
 }) {
   const { addToCart } = useCart();
+
   const images = product.product_images ?? [];
   const variants = product.product_variants ?? [];
 
@@ -53,89 +55,196 @@ export default function ProductDetail({
 
   const [quantity, setQuantity] = useState(1);
 
+  /*
+   * ==========================================
+   * ACTIVE VARIANTS
+   * ==========================================
+   */
+
+  const activeVariants = variants.filter(
+    (variant) => variant.is_active
+  );
+
+  /*
+   * ==========================================
+   * AVAILABLE COLOURS
+   * ==========================================
+   */
+
   const colors = Array.from(
     new Set(
-      variants
-        .filter((variant) => variant.is_active)
+      activeVariants
         .map((variant) => variant.color)
         .filter(Boolean)
     )
   ) as string[];
 
+  /*
+   * ==========================================
+   * AVAILABLE SIZES
+   * ==========================================
+   */
+
   const sizes = Array.from(
     new Set(
-      variants
-        .filter((variant) => variant.is_active)
+      activeVariants
         .map((variant) => variant.size)
         .filter(Boolean)
     )
   ) as string[];
 
-  const selectedVariant = variants.find(
+  /*
+   * ==========================================
+   * SELECTED VARIANT
+   * ==========================================
+   */
+
+  const selectedVariant = activeVariants.find(
     (variant) =>
-      variant.is_active &&
       variant.color === selectedColor &&
       variant.size === selectedSize
   );
+
+  /*
+   * ==========================================
+   * DISPLAY PRICE
+   * ==========================================
+   */
 
   const displayPrice =
     selectedVariant?.price ??
     product.base_price;
 
+  /*
+   * ==========================================
+   * AVAILABLE STOCK
+   *
+   * Product Stock:
+   * products.stock_quantity
+   *
+   * Variant Stock:
+   * selectedVariant.stock_quantity
+   * ==========================================
+   */
+
+  const availableStock =
+    product.inventory_mode === "variant"
+      ? Number(
+          selectedVariant?.stock_quantity ?? 0
+        )
+      : Number(
+          product.stock_quantity ?? 0
+        );
+
+  /*
+   * ==========================================
+   * RESET QUANTITY WHEN SELECTION CHANGES
+   * ==========================================
+   */
+
+  useEffect(() => {
+    setQuantity(1);
+  }, [selectedColor, selectedSize]);
+
+  /*
+   * ==========================================
+   * KEEP QUANTITY WITHIN AVAILABLE STOCK
+   * ==========================================
+   */
+
+  useEffect(() => {
+    if (
+      availableStock > 0 &&
+      quantity > availableStock
+    ) {
+      setQuantity(availableStock);
+    }
+  }, [availableStock, quantity]);
+
+  /*
+   * ==========================================
+   * CAN ADD TO CART
+   * ==========================================
+   */
+
   const canAddToCart =
-    product.stock_quantity !== 0 &&
+    selectedVariant !== undefined &&
     selectedColor !== null &&
-    selectedSize !== null;
+    selectedSize !== null &&
+    availableStock > 0 &&
+    quantity <= availableStock;
+
+  /*
+   * ==========================================
+   * INCREASE QUANTITY
+   * ==========================================
+   */
 
   function increaseQuantity() {
+    if (quantity >= availableStock) {
+      return;
+    }
+
+    setQuantity(
+      (currentQuantity) =>
+        currentQuantity + 1
+    );
+  }
+
+  /*
+   * ==========================================
+   * DECREASE QUANTITY
+   * ==========================================
+   */
+
+  function decreaseQuantity() {
+    setQuantity(
+      (currentQuantity) =>
+        Math.max(1, currentQuantity - 1)
+    );
+  }
+
+  /*
+   * ==========================================
+   * HANDLE ADD TO CART
+   * ==========================================
+   */
+
+  function handleAddToCart() {
     if (
-      product.stock_quantity &&
-      quantity >= product.stock_quantity
+      !selectedVariant ||
+      !selectedColor ||
+      !selectedSize ||
+      availableStock <= 0 ||
+      quantity > availableStock
     ) {
       return;
     }
 
-    setQuantity((current) => current + 1);
-  }
+    const primaryImage =
+      images.find(
+        (image) => image.is_primary
+      ) || images[0];
 
-  function decreaseQuantity() {
-    setQuantity((current) =>
-      Math.max(1, current - 1)
+    addToCart({
+      cartItemId:
+        `${product.id}-${selectedVariant.id}`,
+      productId: product.id,
+      variantId: selectedVariant.id,
+      name: product.name,
+      slug: product.slug,
+      price: Number(displayPrice),
+      quantity,
+      size: selectedSize,
+      color: selectedColor,
+      imageUrl:
+        primaryImage?.image_url,
+    });
+
+    alert(
+      `${product.name} has been added to your cart.`
     );
   }
-
-function handleAddToCart() {
-  if (
-    !selectedVariant ||
-    !selectedColor ||
-    !selectedSize
-  ) {
-    return;
-  }
-
-  const primaryImage =
-    images.find(
-      (image) => image.is_primary
-    ) || images[0];
-
-  addToCart({
-    cartItemId:
-      `${product.id}-${selectedColor}-${selectedSize}`,
-    productId: product.id,
-    name: product.name,
-    slug: product.slug,
-    price: Number(displayPrice),
-    quantity,
-    size: selectedSize,
-    color: selectedColor,
-    imageUrl:
-      primaryImage?.image_url,
-  });
-
-  alert(
-    `${product.name} has been added to your cart.`
-  );
-}
 
   return (
     <section className="product-detail">
@@ -195,7 +304,6 @@ function handleAddToCart() {
 
       </div>
 
-
       {/* =================================
           PRODUCT INFORMATION
       ================================= */}
@@ -209,7 +317,10 @@ function handleAddToCart() {
         <h1>{product.name}</h1>
 
         <p className="product-detail-price">
-          ₦{Number(displayPrice).toLocaleString()}
+          ₦
+          {Number(
+            displayPrice
+          ).toLocaleString()}
         </p>
 
         {product.description && (
@@ -217,7 +328,6 @@ function handleAddToCart() {
             {product.description}
           </p>
         )}
-
 
         {/* COLOUR */}
 
@@ -245,9 +355,9 @@ function handleAddToCart() {
                       ? "product-color-button active"
                       : "product-color-button"
                   }
-                  onClick={() =>
-                    setSelectedColor(color)
-                  }
+                  onClick={() => {
+                    setSelectedColor(color);
+                  }}
                 >
                   {color}
                 </button>
@@ -257,7 +367,6 @@ function handleAddToCart() {
 
           </div>
         )}
-
 
         {/* SIZE */}
 
@@ -285,9 +394,9 @@ function handleAddToCart() {
                       ? "product-size-button active"
                       : "product-size-button"
                   }
-                  onClick={() =>
-                    setSelectedSize(size)
-                  }
+                  onClick={() => {
+                    setSelectedSize(size);
+                  }}
                 >
                   {size}
                 </button>
@@ -297,7 +406,6 @@ function handleAddToCart() {
 
           </div>
         )}
-
 
         {/* QUANTITY */}
 
@@ -313,6 +421,7 @@ function handleAddToCart() {
               type="button"
               onClick={decreaseQuantity}
               aria-label="Decrease quantity"
+              disabled={quantity <= 1}
             >
               −
             </button>
@@ -323,6 +432,10 @@ function handleAddToCart() {
               type="button"
               onClick={increaseQuantity}
               aria-label="Increase quantity"
+              disabled={
+                availableStock <= 0 ||
+                quantity >= availableStock
+              }
             >
               +
             </button>
@@ -330,7 +443,6 @@ function handleAddToCart() {
           </div>
 
         </div>
-
 
         {/* ADD TO CART */}
 
@@ -340,23 +452,44 @@ function handleAddToCart() {
           disabled={!canAddToCart}
           onClick={handleAddToCart}
         >
-          {!selectedColor || !selectedSize
+          {!selectedColor ||
+          !selectedSize
             ? "SELECT SIZE & COLOUR"
+            : availableStock <= 0
+            ? "OUT OF STOCK"
             : "ADD TO CART"}
 
           <span>→</span>
         </button>
 
-
         {/* STOCK */}
 
-        {product.stock_quantity === 0 ? (
+        {!selectedColor ||
+        !selectedSize ? (
+          product.inventory_mode ===
+            "product" &&
+          Number(
+            product.stock_quantity ?? 0
+          ) <= 0 ? (
+            <p className="product-stock out-of-stock">
+              Out of stock
+            </p>
+          ) : (
+            <p className="product-stock">
+              Select a size and colour
+            </p>
+          )
+        ) : availableStock <= 0 ? (
           <p className="product-stock out-of-stock">
-            Out of stock
+            This selection is out of stock
           </p>
         ) : (
           <p className="product-stock">
-            Available for order
+            {availableStock}{" "}
+            {availableStock === 1
+              ? "unit"
+              : "units"}{" "}
+            available
           </p>
         )}
 

@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -11,6 +12,7 @@ import {
 export type CartItem = {
   cartItemId: string;
   productId: string;
+  variantId: string;
   name: string;
   slug: string;
   price: number;
@@ -102,13 +104,11 @@ export function CartProvider({
    */
   function addToCart(item: CartItem) {
     setItems((currentItems) => {
-      const existingItem =
+        const existingItem =
         currentItems.find(
           (existing) =>
-            existing.productId ===
-              item.productId &&
-            existing.size === item.size &&
-            existing.color === item.color
+            existing.variantId ===
+            item.variantId
         );
 
       if (existingItem) {
@@ -187,9 +187,13 @@ export function CartProvider({
   /*
    * Clear cart
    */
-  function clearCart() {
+  const clearCart = useCallback(() => {
     setItems([]);
+
+    if (typeof window !== "undefined") {
+    localStorage.removeItem("dcclothings-cart");
   }
+  }, []);
 
   /*
    * Total number of physical items

@@ -7,6 +7,7 @@ type Product = {
   slug: string;
   base_price: number;
   stock_quantity: number;
+  inventory_mode: "product" | "variant";
   is_active: boolean;
   is_featured: boolean;
   category_id: string | null;
@@ -32,6 +33,7 @@ export default async function AdminInventoryPage() {
         slug,
         base_price,
         stock_quantity,
+        inventory_mode,
         is_active,
         is_featured,
         category_id
