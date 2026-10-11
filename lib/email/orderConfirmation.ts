@@ -1,11 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(
-
-  process.env.RESEND_API_KEY
-
-);
-
 type OrderItem = {
 
   product_name: string;
@@ -80,6 +74,10 @@ export async function sendOrderConfirmationEmail(
       "RESEND_FROM_EMAIL is not configured. Use an address on a domain verified in Resend."
     );
   }
+
+  // Initialise Resend only when an email is actually being sent.
+  // This prevents Next.js build-time module evaluation from requiring the key.
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   const itemsHtml = order.items
 
