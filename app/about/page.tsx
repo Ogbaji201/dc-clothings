@@ -66,9 +66,9 @@ export default function AboutPage() {
             </p>
 
             <h2>
-              Clothing that
+              Outfit 
               <br />
-              feels like you.
+              for  everybody.
             </h2>
 
             <p>
@@ -216,7 +216,7 @@ export default function AboutPage() {
 
             </div>
 
-            <div className="about-value">
+            {/* <div className="about-value">
 
               <span>
                 04
@@ -232,7 +232,7 @@ export default function AboutPage() {
                 identity and personal style.
               </p>
 
-            </div>
+            </div> */}
 
           </div>
 

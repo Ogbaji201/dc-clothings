@@ -67,7 +67,7 @@ export default function Header() {
           />
 
           <div className="brand-tagline">
-            Nigerian Made. Designed to Last.
+            Premium Quality, Made in Nigeria.
           </div>
 
         </a>
