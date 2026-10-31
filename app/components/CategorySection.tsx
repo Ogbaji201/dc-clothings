@@ -8,13 +8,13 @@ type Category = {
 
 const temporaryImages: Record<string, string> = {
   "t-shirts-tops":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/productRange.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/e69b555d-6bb9-4c93-be64-b1424e02b997/abe3c9ed-3bf8-4924-a16d-03e5e1e58e43.jpg",
 
   "collar-shirts":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/catalogue.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/Premium%20Polo%20Shirt%20Showcase.png",
 
   "sets":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/806f919d-e440-4944-9cd7-cb7c5d12666a/a121cf3e-ee75-4e32-b43a-bdc094bf0aba.jpg",
 };
 
 const categoryDescriptions: Record<string, string> = {

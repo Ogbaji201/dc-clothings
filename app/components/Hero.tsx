@@ -190,7 +190,8 @@ export default function Hero() {
       <div className="hero-image-wrapper">
 
         <img
-          src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg"
+          // src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg"
+          src ="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/Smiling%20Multigenerational%20Family%20Portrait.png"
           alt="DCClothings premium Nigerian-made clothing"
           className="hero-image"
         />

@@ -4,22 +4,22 @@ import Footer from "../components/Footer";
 
 const temporaryImages: Record<string, string> = {
   "t-shirts-tops":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/productRange.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/dae8ec41-e839-4e26-aa6d-e6dee3108af9/8f6e6293-99c8-42a7-b5ab-409b0c8edd46.png",
 
   "collar-shirts":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/catalogue.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/Premium%20Polo%20Shirt%20Showcase.png",
 
   "sweatshirts-hoodies":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/55176a43-9b58-45ca-a6fd-da50c0559ccd/2eb761a1-c65f-42b1-a490-3f1eb59dbe9c.jpg",
 
   "sets":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/806f919d-e440-4944-9cd7-cb7c5d12666a/a121cf3e-ee75-4e32-b43a-bdc094bf0aba.jpg",
 
   "bottoms":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/productRange.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/b7696e66-a730-4ef2-9155-d5b10101412f/e490c32a-5726-4886-8396-3ccfe621946e.jpg",
 
   "jackets-outerwear":
-    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/catalogue.jpeg",
+    "https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/2abfd229-d0b3-4bdc-9af5-aceb037b9df9/b21f96f4-807c-4ab7-a2a5-9f9624bf41a0.jpg",
 };
 
 const collectionDescriptions: Record<string, string> = {

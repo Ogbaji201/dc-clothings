@@ -21,7 +21,7 @@ const faqs = [
     category: "Products",
     question: "What sizes are available?",
     answer:
-      "Our current collection is available in M, L, XL and XXL. Size availability can vary between products, so please check the available options on each product page before ordering.",
+      "Our current collection is available in S, M, L, XL and XXL. Size availability can vary between products, so please check the available options on each product page before ordering.",
   },
   {
     category: "Products",
@@ -69,7 +69,7 @@ const faqs = [
     category: "Payments",
     question: "What payment methods do you accept?",
     answer:
-      "Payment options will be presented during checkout once the payment system is fully enabled.",
+      "Payment options will be presented during checkout. We accept various payment methods including card payments, bank transfers and mobile money. Please note that payment options may vary depending on your location and order.",
   },
   {
     category: "Support",

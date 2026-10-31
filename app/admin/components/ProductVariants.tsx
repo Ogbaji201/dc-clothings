@@ -29,6 +29,7 @@ const AVAILABLE_COLOURS = [
 const AVAILABLE_SIZES = [
   "M",
   "L",
+  "S",
   "XL",
   "XXL",
 ];
