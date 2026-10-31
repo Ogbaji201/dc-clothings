@@ -53,7 +53,7 @@ export default function AboutPage() {
           <div className="about-story-image">
 
             <img
-              src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/family.jpeg"
+              src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/Inclusive%20Family%20Lifestyle%20Portrait.png"
               alt="DCClothings collection"
             />
 
@@ -133,7 +133,7 @@ export default function AboutPage() {
           <div className="about-nigeria-image">
 
             <img
-              src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/productRange.jpeg"
+              src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/Crafting%20Style%20in%20a%20Nigerian%20Atelier.png"
               alt="DCClothings clothing collection"
             />
 
