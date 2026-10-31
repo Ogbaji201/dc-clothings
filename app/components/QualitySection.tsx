@@ -7,7 +7,7 @@ export default function QualitySection() {
       ========================================= */}
 
       <img
-        src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/catalogue.jpeg"
+        src="https://loxvtqcwfbmqhejiupxr.supabase.co/storage/v1/object/public/product-image/products/catalogue%20(1).jpeg"
         alt="DCClothings quality and craftsmanship"
         className="quality-image"
       />
