@@ -1,6 +1,77 @@
+// import { redirect } from "next/navigation";
+
+// import { createClient } from "@/lib/supabase/server";
+
+// export default async function AdminPage() {
+//   const supabase = await createClient();
+
+//   const {
+//     data: { user },
+//   } = await supabase.auth.getUser();
+
+//   if (!user) {
+//     redirect("/admin/login");
+//   }
+
+//   return (
+//     <main className="admin-page">
+
+//       <div className="admin-container">
+
+//         <div className="admin-header">
+
+//           <div>
+//             <p className="admin-eyebrow">
+//               DC CLOTHINGS / ADMIN
+//             </p>
+
+//             <h1>
+//               Dashboard
+//             </h1>
+
+//             <p>
+//               Welcome back, {user.email}
+//             </p>
+//           </div>
+
+//         </div>
+
+
+//         <section className="admin-welcome">
+
+//           <p className="admin-section-eyebrow">
+//             ADMINISTRATION
+//           </p>
+
+//           <h2>
+//             Your dashboard is
+//             <br />
+//             ready.
+//           </h2>
+
+//           <p>
+//             This is the secure administration area
+//             for DCCClothings. We will build your
+//             orders, enquiries, products and inventory
+//             management tools here.
+//           </p>
+
+//         </section>
+
+//       </div>
+
+//     </main>
+//   );
+// }
+
+
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminDashboardData } from "./actions";
+import AnalyticsDashboard from "./components/AnalyticsDashboard";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -9,57 +80,41 @@ export default async function AdminPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  const adminEmail = process.env.ADMIN_EMAIL
+    ?.trim()
+    .toLowerCase();
+
+  if (
+    !user?.email ||
+    !adminEmail ||
+    user.email.trim().toLowerCase() !== adminEmail
+  ) {
     redirect("/admin/login");
   }
 
+  const dashboardData = await getAdminDashboardData("30days");
+
   return (
     <main className="admin-page">
-
       <div className="admin-container">
 
         <div className="admin-header">
-
           <div>
             <p className="admin-eyebrow">
               DC CLOTHINGS / ADMIN
             </p>
 
-            <h1>
-              Dashboard
-            </h1>
+            <h1>Dashboard</h1>
 
-            <p>
-              Welcome back, {user.email}
-            </p>
+            <p>Welcome back, {user.email}</p>
           </div>
-
         </div>
 
-
-        <section className="admin-welcome">
-
-          <p className="admin-section-eyebrow">
-            ADMINISTRATION
-          </p>
-
-          <h2>
-            Your dashboard is
-            <br />
-            ready.
-          </h2>
-
-          <p>
-            This is the secure administration area
-            for DCCClothings. We will build your
-            orders, enquiries, products and inventory
-            management tools here.
-          </p>
-
-        </section>
+        <AnalyticsDashboard
+          initialData={dashboardData}
+        />
 
       </div>
-
     </main>
   );
 }
