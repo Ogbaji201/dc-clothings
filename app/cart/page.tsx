@@ -13,6 +13,8 @@ export default function CartPage() {
     removeFromCart,
     clearCart,
     subtotal,
+    fulfillmentMethod,
+    setFulfillmentMethod
   } = useCart();
 
   return (
@@ -207,6 +209,66 @@ export default function CartPage() {
               </div>
 
 
+        {/* FULFILMENT SELECTION */}
+
+        <section className="cart-fulfillment">
+          <p className="cart-summary-eyebrow">
+            HOW WOULD YOU LIKE TO RECEIVE YOUR ORDER?
+          </p>
+
+      <div className="cart-fulfillment-options">
+
+        <label
+          className={`cart-fulfillment-option ${
+            fulfillmentMethod === "pickup" ? "selected" : ""
+          }`}
+        >
+          <input
+            type="radio"
+            name="fulfillment"
+            value="pickup"
+            checked={fulfillmentMethod === "pickup"}
+            onChange={() => setFulfillmentMethod("pickup")}
+          />
+
+          <span>
+            <strong>Store Pickup</strong>
+            <small>
+              Collect your order from our location in Challenge,
+              Ibadan, between 10:00 AM and 5:00 PM.
+              Please contact us before visiting.
+            </small>
+          </span>
+        </label>
+
+        <label
+          className={`cart-fulfillment-option ${
+            fulfillmentMethod === "delivery" ? "selected" : ""
+          }`}
+        >
+          <input
+            type="radio"
+            name="fulfillment"
+            value="delivery"
+            checked={fulfillmentMethod === "delivery"}
+            onChange={() => setFulfillmentMethod("delivery")}
+          />
+
+          <span>
+            <strong>Delivery</strong>
+            <small>
+              Our sales representative will contact you within
+              24 hours to confirm your delivery arrangements
+              and applicable delivery charge.
+            </small>
+          </span>
+        </label>
+
+      </div>
+    </section>
+
+
+
               {/* SUMMARY */}
 
               <aside className="cart-summary">
@@ -231,9 +293,10 @@ export default function CartPage() {
                 </div>
 
                 <p className="cart-summary-note">
-                  Delivery charges will be
-                  calculated at checkout.
-                </p>
+                 {fulfillmentMethod === "pickup"
+                  ? "You have selected store pickup. No delivery charge applies."
+                  : "Delivery charges are not included in this payment. Our sales representative will contact you within 24 hours."}
+              </p>
 
                 <Link
                   href="/checkout"

@@ -40,6 +40,8 @@ type CustomerDetails = {
 
 };
 
+type FulfillmentMethod = "delivery" | "pickup";
+
 export async function POST(request: Request) {
 
   try {
@@ -49,6 +51,9 @@ export async function POST(request: Request) {
     const cartItems: CartItem[] = body.cartItems;
 
     const customer: CustomerDetails = body.customer;
+
+    const fulfillmentMethod: FulfillmentMethod =
+    body.fulfillmentMethod;
 
     // ==================================================
 
@@ -108,7 +113,7 @@ export async function POST(request: Request) {
 
           error:
 
-            "Please provide all required customer details.",
+            "Please provide your name, email and phone number.",
 
         },
 
@@ -119,7 +124,20 @@ export async function POST(request: Request) {
         }
 
       );
-
+      if (
+          fulfillmentMethod === "delivery" &&
+          (
+            !customer.country?.trim() ||
+            !customer.state?.trim() ||
+            !customer.city?.trim() ||
+            !customer.address?.trim()
+          )
+        ) {
+          return NextResponse.json(
+            { error: "Please provide your complete delivery address." },
+            { status: 400 }
+          );
+        }
     }
 
     const paystackSecretKey = process.env.PAYSTACK_SECRET_KEY;
@@ -579,17 +597,16 @@ export async function POST(request: Request) {
 
     // ==================================================
 
-    // Temporary static delivery fee.
 
     // This will be replaced with location-based
 
     // delivery calculation later.
 
-    const deliveryFee = 5000;
+    // const deliveryFee = 0;
 
     const totalAmount =
 
-      subtotal + deliveryFee;
+      subtotal;
 
     // ==================================================
 
@@ -681,7 +698,25 @@ export async function POST(request: Request) {
 
           address:
 
-            customer.address,
+            fulfillmentMethod === "pickup"
+            ? "Store pickup - Challenge, Ibadan, Oyo State, Nigeria"
+            : customer.address,
+        
+          delivery_city:
+            fulfillmentMethod === "pickup"
+              ? "Ibadan"
+              : customer.city,
+
+          delivery_state:
+            fulfillmentMethod === "pickup"
+              ? "Oyo State"
+              : customer.state,
+
+          fulfillment_method: fulfillmentMethod,
+
+          subtotal: subtotal,
+          delivery_fee: 0,
+          total_amount: totalAmount,
 
         })
 
@@ -791,9 +826,9 @@ export async function POST(request: Request) {
 
           subtotal,
 
-        delivery_fee:
+        // delivery_fee:
 
-          deliveryFee,
+          // deliveryFee,
 
         total_amount:
 
@@ -992,6 +1027,8 @@ const callbackUrl =
             metadata: {
               order_id: order.id,
               order_number: order.order_number,
+              fulfillment_method: fulfillmentMethod,
+
             },
           }),
           cache: "no-store",
@@ -1091,9 +1128,9 @@ const callbackUrl =
 
         subtotal,
 
-      deliveryFee:
+      // deliveryFee:
 
-        deliveryFee,
+      //   deliveryFee,
 
       totalAmount:
 

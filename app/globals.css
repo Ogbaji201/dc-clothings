@@ -12540,3 +12540,77 @@ input {
     gap: 4px;
   }
 }
+
+/* Contact details links */
+.contact-detail p a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.contact-detail p a:hover {
+  color: #8b5e45;
+}
+
+/* Allow long email addresses to wrap */
+.contact-detail p {
+  overflow-wrap: anywhere;
+}
+
+/* =========================================
+   CART FULFILMENT OPTIONS
+========================================= */
+
+.cart-fulfillment {
+  padding: 24px;
+  background: #faf9f6;
+  border: 1px solid #e5e0d8;
+  border-radius: 12px;
+  align-self: start;
+}
+
+.cart-fulfillment-options {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.cart-fulfillment-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 18px;
+  border: 1px solid #dedbd5;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.cart-fulfillment-option.selected {
+  border-color: #321b14;
+  background: #f5f1eb;
+}
+
+.cart-fulfillment-option input {
+  margin-top: 4px;
+  accent-color: #321b14;
+  flex-shrink: 0;
+}
+
+.cart-fulfillment-option span {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cart-fulfillment-option strong {
+  color: #222;
+  font-size: 15px;
+}
+
+.cart-fulfillment-option small {
+  color: #77736c;
+  font-size: 13px;
+  line-height: 1.6;
+}

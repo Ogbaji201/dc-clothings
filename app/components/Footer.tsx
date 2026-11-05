@@ -271,7 +271,8 @@ export default function Footer() {
         <p className="footer-motto">
           Style Today. A Brighter Tomorrow. 
           <br/>
-          DCclothings is a sub brand of Dammyscreation Global Limited
+          DCclothings is a sub brand of Dammyscreation Global Limited. <br></br>
+          Contact number:+234 707 366 5968
         </p>
 
       </div>

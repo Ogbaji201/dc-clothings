@@ -146,59 +146,65 @@ export default function ContactPage() {
             </p>
 
 
-            <div className="contact-detail-list">
+            
+        <div className="contact-detail-list">
 
-              <div className="contact-detail">
-
-                <span className="contact-detail-number">
-                  01
-                </span>
-
-                <div>
-                  <h3>Email</h3>
-
-                  <p>
-                    Your email address
-                  </p>
-                </div>
-
-              </div>
-
-
-              <div className="contact-detail">
-
-                <span className="contact-detail-number">
-                  02
-                </span>
-
-                <div>
-                  <h3>Phone</h3>
-
-                  <p>
-                    Your phone number
-                  </p>
-                </div>
-
-              </div>
-
-
-              <div className="contact-detail">
-
-                <span className="contact-detail-number">
-                  03
-                </span>
-
-                <div>
-                  <h3>WhatsApp</h3>
-
-                  <p>
-                    Chat with our team
-                  </p>
-                </div>
-
-              </div>
-
+          {/* EMAIL */}
+          <div className="contact-detail">
+            <span className="contact-detail-number">01</span>
+            <div>
+              <h3>Email</h3>
+              <p>
+                <a href="mailto:shopdcclothings@gmail.com">
+                  shopdcclothings@gmail.com
+                </a>
+              </p>
             </div>
+          </div>
+
+          {/* PHONE */}
+          <div className="contact-detail">
+            <span className="contact-detail-number">02</span>
+            <div>
+              <h3>Phone</h3>
+              <p>
+                <a href="tel:+2347073665968">
+                  +234 707 366 5968
+                </a>
+              </p>
+            </div>
+          </div>
+
+          {/* WHATSAPP */}
+          <div className="contact-detail">
+            <span className="contact-detail-number">03</span>
+            <div>
+              <h3>WhatsApp</h3>
+              <p>
+                <a
+                  href="https://wa.me/2347073665968"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Chat with our team
+                </a>
+              </p>
+            </div>
+          </div>
+
+          {/* BUSINESS ADDRESS */}
+          <div className="contact-detail">
+            <span className="contact-detail-number">04</span>
+            <div>
+              <h3>Our Location</h3>
+              <p>
+                Challenge, Ibadan, Oyo State, Nigeria
+              </p>
+            </div>
+          </div>
+
+        </div>
+
 
 
             <div className="contact-links">
